@@ -807,7 +807,7 @@ func generateImage(w http.ResponseWriter, r *http.Request) {
 	_ = db.Select(&results, "SELECT * FROM `posts`")
 
 	for _, p := range results {
-		imagePath := "../public" + imageURL(p)
+		imagePath := "/home/isucon/private_isu/webapp/public" + imageURL(p)
 		f, err := os.Create(imagePath)
 		if err != nil {
 			fmt.Println(err)

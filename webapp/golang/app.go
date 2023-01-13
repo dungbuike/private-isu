@@ -92,7 +92,7 @@ func dbInitialize() {
 
 func tryLogin(accountName, password string) *User {
 	u := User{}
-	err := db.Get(&u, "SELECT * FROM users WHERE account_name = ? AND del_flg = 0 AND passhash = ?", accountName, calculatePasshash(u.AccountName, password))
+	err := db.Get(&u, "SELECT * FROM users WHERE account_name = ? AND del_flg = 0 AND passhash = ? LIMIT 1", accountName, calculatePasshash(u.AccountName, password))
 	if err != nil {
 		return nil
 	}
@@ -150,7 +150,7 @@ func getSessionUser(r *http.Request) User {
 
 	u := User{}
 
-	err := db.Get(&u, "SELECT * FROM `users` WHERE `id` = ?", uid)
+	err := db.Get(&u, "SELECT * FROM `users` WHERE `id` = ? LIMIT 1", uid)
 	if err != nil {
 		return User{}
 	}
@@ -183,6 +183,8 @@ func makePosts(results []Post, csrfToken string, allComments bool) ([]Post, erro
 		query := "SELECT * FROM `comments` WHERE `post_id` = ? ORDER BY `created_at` DESC"
 		if !allComments {
 			query += " LIMIT 3"
+		} else {
+			query += " LIMIT 20"
 		}
 		var comments []Comment
 		err = db.Select(&comments, query, p.ID)
@@ -419,7 +421,7 @@ func getAccountName(w http.ResponseWriter, r *http.Request) {
 	accountName := chi.URLParam(r, "accountName")
 	user := User{}
 
-	err := db.Get(&user, "SELECT * FROM `users` WHERE `account_name` = ? AND `del_flg` = 0", accountName)
+	err := db.Get(&user, "SELECT * FROM `users` WHERE `account_name` = ? AND `del_flg` = 0 LIMIT 1", accountName)
 	if err != nil {
 		log.Print(err)
 		return

@@ -25,8 +25,9 @@ import (
 )
 
 var (
-	db    *sqlx.DB
-	store *gsm.MemcacheStore
+	db             *sqlx.DB
+	store          *gsm.MemcacheStore
+	memcacheClient *memcache.Client
 )
 
 const (
@@ -175,7 +176,18 @@ func makePosts(results []Post, csrfToken string, allComments bool) ([]Post, erro
 	var posts []Post
 
 	for _, p := range results {
-		err := db.Get(&p.CommentCount, "SELECT COUNT(*) AS `count` FROM `comments` WHERE `post_id` = ?", p.ID)
+		key := fmt.Sprint("SELECT COUNT(*) AS `count` FROM `comments` WHERE `post_id` = %d", p.ID)
+		cached, err := memcacheClient.Get(key)
+		p.CommentCount, err = strconv.Atoi(string(cached.Value))
+		if p.CommentCount == 0 {
+			err = db.Get(&p.CommentCount, "SELECT COUNT(*) AS `count` FROM `comments` WHERE `post_id` = ?", p.ID)
+			memcacheClient.Add(&memcache.Item{
+				Key:        key,
+				Value:      []byte(strconv.Itoa(p.CommentCount)),
+				Flags:      0,
+				Expiration: 0,
+			})
+		}
 		if err != nil {
 			return nil, err
 		}

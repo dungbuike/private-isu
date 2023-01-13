@@ -800,6 +800,19 @@ func postAdminBanned(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/admin/banned", http.StatusFound)
 }
 
+func generateImage(w http.ResponseWriter, r *http.Request) {
+
+	results := []Post{}
+
+	_ = db.Select(&results, "SELECT * FROM `posts`")
+
+	for _, p := range results {
+		imagePath := "/home/isucon/private_isu/webapp/golang" + imageURL(p)
+		_ = os.WriteFile(imagePath, p.Imgdata, 0644)
+	}
+	http.Redirect(w, r, "/", http.StatusFound)
+}
+
 func main() {
 	host := os.Getenv("ISUCONP_DB_HOST")
 	if host == "" {
@@ -842,6 +855,7 @@ func main() {
 
 	r.Get("/initialize", getInitialize)
 	r.Get("/login", getLogin)
+	r.Get("/generateImage", generateImage)
 	r.Post("/login", postLogin)
 	r.Get("/register", getRegister)
 	r.Post("/register", postRegister)

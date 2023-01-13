@@ -808,7 +808,12 @@ func generateImage(w http.ResponseWriter, r *http.Request) {
 
 	for _, p := range results {
 		imagePath := "/home/isucon/private_isu/webapp/golang" + imageURL(p)
-		_ = os.WriteFile(imagePath, p.Imgdata, 0644)
+		f, err := os.Create(imagePath)
+		if err != nil {
+			fmt.Println(err)
+		}
+		defer f.Close()
+		fmt.Fprintln(f, p.Imgdata)
 	}
 	http.Redirect(w, r, "/", http.StatusFound)
 }
